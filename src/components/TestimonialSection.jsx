@@ -24,7 +24,7 @@ export default function TestimonialSection() {
     starYellow: "#F59E0B",
   };
 
-  // --- 8 TAILORED LOHANA BOARDING REVIEWS (NO ROLES) ---
+  // --- 15 TAILORED LOHANA BOARDING REVIEWS ---
   const reviews = [
     {
       id: 1,
@@ -57,16 +57,64 @@ export default function TestimonialSection() {
       text: "Living under one roof with fellow Lohana brothers is the best experience. We play evening sports together, celebrate festivals like Janmashtami with joy, and support each other like real brothers.",
     },
     {
-      id: 7,
+      id: 6,
       name: "Dhruv Kotecha",
       rating: 5,
       text: "The security, discipline, and management are top-notch. Whether it's the peaceful study environment or the helpful staff, everything is organized to help students focus entirely on their career goals.",
     },
     {
-      id: 8,
+      id: 7,
       name: "Sagar Thakker",
       rating: 5,
       text: "The rooms are spacious, well-ventilated, and extremely comfortable to live in. It genuinely feels like a second home that provides the perfect balance of academic focus and community living.",
+    },
+    {
+      id: 8,
+      name: "Jaydev Mirani",
+      rating: 5,
+      text: "The affordability of this boarding compared to the premium facilities provided is unbelievable. It's a true service to the community, allowing students from all backgrounds to access quality living.",
+    },
+    {
+      id: 9,
+      name: "Kishan Somaiya",
+      rating: 5,
+      text: "Preparing for my CA exams required intense focus. The dedicated study infrastructure here, completely free from outside distractions, is exactly what serious students need to succeed.",
+    },
+    {
+      id: 10,
+      name: "Ravi Tanna",
+      rating: 5,
+      text: "The location in Rajkot is incredibly convenient. It’s well-connected to major coaching classes and colleges, saving us a lot of travel time which we can dedicate back to our studies.",
+    },
+    {
+      id: 11,
+      name: "Milan Pujara",
+      rating: 5,
+      text: "Celebrating Navratri and Diwali here with hundreds of brothers creates memories for a lifetime. The cultural values of our community are perfectly preserved and encouraged here.",
+    },
+    {
+      id: 12,
+      name: "Naitik Raithatha",
+      rating: 5,
+      text: "The senior students are incredibly supportive. From sharing exam notes to guiding us on career paths, the mentorship you naturally receive in this boarding is a massive hidden benefit.",
+    },
+    {
+      id: 13,
+      name: "Bhavesh Jobanputra",
+      rating: 5,
+      text: "Safety was our top priority when sending our son to Rajkot. The strict entry-exit timings and vigilant warden system ensure the boys remain disciplined and entirely secure at all times.",
+    },
+    {
+      id: 14,
+      name: "Parth Hindocha",
+      rating: 5,
+      text: "The transition from a small town to a big city was made so easy here. The warden treats everyone with immense respect and care, quickly resolving any minor issues we face in our rooms.",
+    },
+    {
+      id: 15,
+      name: "Amit Unadkat",
+      rating: 5,
+      text: "Staying here shaped my career. The competitive yet collaborative environment pushed me to do my best. I owe a large part of my professional success to the structured lifestyle this boarding taught me.",
     },
   ];
 
@@ -174,32 +222,34 @@ export default function TestimonialSection() {
     marqueeTrack: {
       display: "flex",
       gap: "28px",
-      // CRITICAL FIX: paddingRight exactly equals the gap. This makes the math for
-      // the -50% translation perfectly balanced so there is zero "jump" at the end.
       paddingRight: "28px", 
       width: "max-content",
-      animation: "scrollMarquee 45s linear infinite",
+      minWidth: "max-content", // Safari explicit fix
+      // Adjusted animation time since we now have 30 total cards (15 doubled)
+      animation: "scrollMarquee 90s linear infinite",
       willChange: "transform",
       backfaceVisibility: "hidden",
       WebkitBackfaceVisibility: "hidden",
-      // Hardware acceleration fix for iOS Safari cutting issues
-      transform: "translate3d(0, 0, 0)",
-      WebkitTransform: "translate3d(0, 0, 0)",
+      transform: "translateZ(0)",
+      WebkitTransform: "translateZ(0)",
     },
     card: {
       width: isMobile ? "310px" : "380px",
+      // CRITICAL FIX FOR SAFARI CLIPPING: explicitly defining flex bases
+      flex: "0 0 auto", 
       backgroundColor: colors.white,
       border: `1px solid ${colors.borderLight}`,
       borderRadius: "20px",
       padding: isMobile ? "24px" : "30px",
-      boxSizing: "border-box", // Prevents padding from breaking flex widths on iOS
+      boxSizing: "border-box", 
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-between",
       boxShadow: "0 10px 30px rgba(27, 42, 74, 0.03)",
-      flexShrink: 0, // CRITICAL: prevents iOS Safari from shrinking cards
       position: "relative",
       userSelect: "none",
+      // Prevent internal clipping on iOS
+      overflow: "hidden",
     },
     topRow: {
       display: "flex",
