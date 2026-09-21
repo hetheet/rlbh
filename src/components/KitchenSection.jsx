@@ -36,6 +36,12 @@ export default function KitchenSection() {
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
 
+  // Pause-after-manual-interaction refs: when user manually picks a slide/dish,
+  // auto-play is paused for 10s, then resumes automatically from that point.
+  const sliderPausedUntil = useRef(0);
+  const foodWheelPausedUntil = useRef(0);
+  const MANUAL_PAUSE_MS = 10000;
+
   // Preload food images to prevent initial load glitching
   useEffect(() => {
     const foodImages = [panipuri, punjabi, pauragdo, pavbhaji, bhel, undhiyu];
@@ -101,12 +107,15 @@ export default function KitchenSection() {
     setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
   const goToSlide = (index, e) => {
     if (e) e.stopPropagation();
+    sliderPausedUntil.current = Date.now() + MANUAL_PAUSE_MS;
     setCurrent(index);
   };
 
-  // 100% UNSTOPPABLE TOP SLIDER AUTO-PLAY (Every 5 seconds)
+  // TOP SLIDER AUTO-PLAY (Every 5 seconds) - skips advancing while paused
+  // for 10s after a manual dot click / swipe, then resumes automatically.
   useEffect(() => {
     const timer = setInterval(() => {
+      if (Date.now() < sliderPausedUntil.current) return;
       setCurrent((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
@@ -122,6 +131,7 @@ export default function KitchenSection() {
     if (!touchStartX.current || !touchEndX.current) return;
     const diff = touchStartX.current - touchEndX.current;
     if (Math.abs(diff) > 50) {
+      sliderPausedUntil.current = Date.now() + MANUAL_PAUSE_MS;
       if (diff > 0) nextSlide();
       else prevSlide();
     }
@@ -229,13 +239,21 @@ export default function KitchenSection() {
     },
   ];
 
-  // 100% UNSTOPPABLE FOOD WHEEL AUTO PLAY FIX (Every 5 Seconds)
+  // FOOD WHEEL AUTO PLAY (Every 5 Seconds) - skips advancing while paused
+  // for 10s after a manual dish/dot click, then resumes automatically.
   useEffect(() => {
     const foodTimer = setInterval(() => {
+      if (Date.now() < foodWheelPausedUntil.current) return;
       setActiveFoodId((prev) => (prev + 1) % foodItems.length);
     }, 5000);
     return () => clearInterval(foodTimer);
   }, [foodItems.length]);
+
+  // Wrap manual selection so every click (orbit icon or progress dot) pauses auto-play.
+  const selectFoodManually = (index) => {
+    foodWheelPausedUntil.current = Date.now() + MANUAL_PAUSE_MS;
+    setActiveFoodId(index);
+  };
 
   const getOrbitPosition = (index, total) => {
     const radius = isMobile ? 135 : 215;
@@ -839,7 +857,7 @@ export default function KitchenSection() {
                     return (
                       <button
                         key={item.id}
-                        onClick={() => setActiveFoodId(index)}
+                        onClick={() => selectFoodManually(index)}
                         style={{
                           ...orbitStyle,
                           width: isMobile ? "56px" : "76px",
@@ -1030,7 +1048,7 @@ export default function KitchenSection() {
                   {foodItems.map((_, idx) => (
                     <button
                       key={idx}
-                      onClick={() => setActiveFoodId(idx)}
+                      onClick={() => selectFoodManually(idx)}
                       style={{
                         height: "6px",
                         width: activeFoodId === idx ? "36px" : "12px",
