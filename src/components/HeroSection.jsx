@@ -342,8 +342,7 @@ export default function PremiumHeroSection() {
                   lineHeight: "1.5",
                 }}
               >
-                *Admissions are exclusively reserved for students <br />{" "}
-                belonging to the Lohana community.
+             *Admissions are exclusively reserved for boys belonging to the Lohana community.
               </p>
             </div>
           </div>
