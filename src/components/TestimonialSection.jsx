@@ -174,12 +174,17 @@ export default function TestimonialSection() {
     marqueeTrack: {
       display: "flex",
       gap: "28px",
+      // CRITICAL FIX: paddingRight exactly equals the gap. This makes the math for
+      // the -50% translation perfectly balanced so there is zero "jump" at the end.
+      paddingRight: "28px", 
       width: "max-content",
       animation: "scrollMarquee 45s linear infinite",
       willChange: "transform",
       backfaceVisibility: "hidden",
       WebkitBackfaceVisibility: "hidden",
-      transform: "translateZ(0)",
+      // Hardware acceleration fix for iOS Safari cutting issues
+      transform: "translate3d(0, 0, 0)",
+      WebkitTransform: "translate3d(0, 0, 0)",
     },
     card: {
       width: isMobile ? "310px" : "380px",
@@ -187,11 +192,12 @@ export default function TestimonialSection() {
       border: `1px solid ${colors.borderLight}`,
       borderRadius: "20px",
       padding: isMobile ? "24px" : "30px",
+      boxSizing: "border-box", // Prevents padding from breaking flex widths on iOS
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-between",
       boxShadow: "0 10px 30px rgba(27, 42, 74, 0.03)",
-      flexShrink: 0,
+      flexShrink: 0, // CRITICAL: prevents iOS Safari from shrinking cards
       position: "relative",
       userSelect: "none",
     },
@@ -255,10 +261,17 @@ export default function TestimonialSection() {
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
+          
+          /* Webkit prefixes added to ensure iOS Safari processes the seamless loop flawlessly */
           @keyframes scrollMarquee {
-            0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-50%, 0, 0); }
+            0% { 
+              -webkit-transform: translate3d(0, 0, 0);
+              transform: translate3d(0, 0, 0); 
+            }
+            100% { 
+              -webkit-transform: translate3d(-50%, 0, 0);
+              transform: translate3d(-50%, 0, 0); 
+            }
           }
 
           /* Explicitly allow vertical page scrolling on touch devices */
