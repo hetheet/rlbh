@@ -307,8 +307,8 @@ export default function PremiumHeroSection() {
                 </motion.button>
               </Link>
 
-              {/* 2. Explore Campus -> Links to /gallery */}
-              <Link to="/gallery" style={{ textDecoration: "none" }}>
+              {/* 2. Explore Campus -> Links to /about */}
+              <Link to="/about" style={{ textDecoration: "none" }}>
                 <motion.button
                   style={styles.btnSecondary}
                   whileHover={{

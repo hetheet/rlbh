@@ -11,9 +11,9 @@ import {
   RefreshCw,
 } from "lucide-react";
 import sports1 from "../assets/sports1.png";
-
 import sports2 from "../assets/sports2.png";
 import sports3 from "../assets/sports3.png";
+
 export default function SportsSection() {
   const [isMobile, setIsMobile] = useState(false);
   const [isOutdoor, setIsOutdoor] = useState(true);
@@ -138,10 +138,10 @@ export default function SportsSection() {
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
-      order: isMobile ? -1 : 1, // Moves text to top on mobile
+      order: isMobile ? -1 : 1, 
     },
     imageSectionWrapper: {
-      order: isMobile ? 1 : -1, // Moves images below text on mobile
+      order: isMobile ? 1 : -1, 
       width: "100%",
     },
     imageCollage: {
@@ -176,7 +176,7 @@ export default function SportsSection() {
     },
     mobileSlide: {
       flex: "0 0 85%",
-      minWidth: "85%", // Prevents flexing issues on iOS/Safari
+      minWidth: "85%", 
       scrollSnapAlign: "center",
       height: "260px",
       borderRadius: "20px",
@@ -920,9 +920,11 @@ export default function SportsSection() {
               <div
                 key={idx}
                 className="sports-feature-card"
-                style={styles.featureCard(isOutdoor)}
+                // FIX: Set isActive flag to explicitly true so indoor cards are fully highlighted
+                style={styles.featureCard(true)}
               >
-                <div style={styles.iconBox(isOutdoor)}>{item.icon}</div>
+                {/* FIX: Set isActive flag to true so indoor icons receive gradient backgrounds */}
+                <div style={styles.iconBox(true)}>{item.icon}</div>
                 <h3 style={styles.featureTitle}>{item.title}</h3>
                 <p style={styles.featureDesc}>{item.desc}</p>
               </div>
