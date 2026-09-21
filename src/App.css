@@ -1,0 +1,22 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Add this to lock down the layout boundaries */
+html,
+body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden; /* THIS IS THE MAGIC FIX */
+  position: relative;
+  /* Optional: Makes anchor links scroll smoothly */
+  scroll-behavior: smooth;
+}
+
+/* Prevents images from accidentally breaking out of containers */
+img {
+  max-width: 100%;
+  display: block;
+}
