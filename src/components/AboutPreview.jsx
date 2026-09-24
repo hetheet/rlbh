@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import logo from "../assets/circle-logo.png";
 import circle1 from "../assets/circle1.jpeg";
 import circle2 from "../assets/circle2.PNG";
@@ -7,6 +6,13 @@ import { useNavigate } from "react-router-dom";
 export default function AboutUsInteractive() {
   const [isMobile, setIsMobile] = useState(false);
   const [activeImgId, setActiveImgId] = useState(0);
+
+  // Measured size of the right column (used to place the circles with transforms)
+  const stageRef = useRef(null);
+  const [stage, setStage] = useState({ w: 0, h: 0 });
+  // Transitions are switched on only after the first measured paint,
+  // so the circles never "fly in" from a wrong position on load.
+  const [canAnimate, setCanAnimate] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -18,6 +24,38 @@ export default function AboutUsInteractive() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useLayoutEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      setStage((prev) => (prev.w === w && prev.h === h ? prev : { w, h }));
+    };
+    update();
+
+    let ro;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(update);
+      ro.observe(el);
+    }
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+
+    const raf = requestAnimationFrame(() =>
+      requestAnimationFrame(() => setCanAnimate(true)),
+    );
+
+    return () => {
+      cancelAnimationFrame(raf);
+      if (ro) ro.disconnect();
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, []);
+
   const navigate = useNavigate();
   const colors = {
     background: "#F9F9F9",
@@ -190,34 +228,34 @@ export default function AboutUsInteractive() {
     },
   };
 
-  const getStyleForImage = (isMain) => {
-    if (isMain) {
-      return {
-        width: isMobile ? "270px" : "440px",
-        height: isMobile ? "270px" : "440px",
-        top: isMobile ? "5%" : "10%",
-        right: isMobile ? "0%" : "5%",
-        left: "auto",
-        bottom: "auto",
-        zIndex: 10,
-        filter: "brightness(1) blur(0px)",
-        cursor: "default",
-        boxShadow: "0 25px 50px -12px rgba(10, 20, 37, 0.25)",
-      };
-    } else {
-      return {
-        width: isMobile ? "180px" : "300px",
-        height: isMobile ? "180px" : "300px",
-        top: isMobile ? "auto" : "45%",
-        bottom: isMobile ? "15%" : "auto",
-        left: isMobile ? "15%" : "auto",
-        right: isMobile ? "auto" : "40%",
-        zIndex: 5,
-        filter: "brightness(1) blur(0px)",
-        cursor: "pointer",
-        boxShadow: "0 10px 30px rgba(10, 20, 37, 0.15)",
-      };
-    }
+  // --- CIRCLE PLACEMENT (transform based = smooth on iOS / Android) ---
+  // Both circles are always laid out at the LARGE size and positioned with
+  // translate + scale. Swapping only changes transform (GPU), never
+  // width/height/top/left, so there is no layout work while animating.
+  const LARGE = isMobile ? 270 : 440;
+  const SMALL = isMobile ? 180 : 300;
+  const SMALL_SCALE = SMALL / LARGE;
+  const { w: W, h: H } = stage;
+
+  // Same positions as before: main = top/right, secondary = the other spot
+  const mainPos = isMobile
+    ? { x: W - LARGE, y: 0.05 * H }
+    : { x: W - 0.05 * W - LARGE, y: 0.1 * H };
+  const secondaryPos = isMobile
+    ? { x: 0.15 * W, y: H - 0.15 * H - SMALL }
+    : { x: W - 0.4 * W - SMALL, y: 0.45 * H };
+
+  const getWrapStyle = (isMain) => {
+    const pos = isMain ? mainPos : secondaryPos;
+    const scale = isMain ? 1 : SMALL_SCALE;
+    return {
+      width: `${LARGE}px`,
+      height: `${LARGE}px`,
+      zIndex: isMain ? 10 : 5,
+      cursor: isMain ? "default" : "pointer",
+      transform: `translate3d(${Math.round(pos.x)}px, ${Math.round(pos.y)}px, 0) scale(${scale})`,
+      visibility: W > 0 ? "visible" : "hidden",
+    };
   };
 
   const sparkles = [
@@ -264,6 +302,8 @@ export default function AboutUsInteractive() {
             animation: continuous-spin 15s linear infinite;
             transform-origin: center center;
             will-change: transform;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
           }
 
           .btn-premium:hover {
@@ -280,17 +320,80 @@ export default function AboutUsInteractive() {
             transition: transform 0.3s ease;
           }
 
-          .interactive-circle-img {
-            transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
-                        height 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
-                        top 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
-                        bottom 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
-                        left 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
-                        right 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
-                        filter 0.6s ease, 
-                        box-shadow 0.6s ease;
-            will-change: width, height, top, bottom, left, right;
+          /* ---- Sparkles: pure CSS (compositor thread, no JS per frame) ---- */
+          @keyframes sparkleFloat {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(0.8); opacity: 0.2; }
+            50% { transform: translate3d(0, -15px, 0) scale(1.2); opacity: 0.8; }
+          }
+          .sparkle-dot {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 2;
+            pointer-events: none;
+            will-change: transform, opacity;
+            animation: sparkleFloat 3.5s ease-in-out infinite backwards;
+          }
+
+          /* ---- Interactive circles ---- */
+          .circle-wrap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 50%;
+            transform-origin: 0 0;
+            will-change: transform;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+          }
+          .circle-wrap.can-animate {
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+          }
+
+          /* Shadows are cross-faded with opacity (cheap) instead of
+             animating box-shadow (repaints every frame). */
+          .circle-wrap::before,
+          .circle-wrap::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+          }
+          .circle-wrap::before {
+            /* secondary-state shadow (sized for the scaled-down circle) */
+            box-shadow: 0 15px 44px rgba(10, 20, 37, 0.15);
+            opacity: 1;
+          }
+          .circle-wrap::after {
+            /* main-state shadow */
+            box-shadow: 0 25px 50px -12px rgba(10, 20, 37, 0.25);
+            opacity: 0;
+          }
+          .circle-wrap.is-main::before { opacity: 0; }
+          .circle-wrap.is-main::after { opacity: 1; }
+
+          .circle-img {
+            position: relative;
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
             background-color: #E8E8E8;
+            transition: transform 0.3s ease;
+            -webkit-user-drag: none;
+            user-select: none;
+          }
+          @media (hover: hover) {
+            .circle-wrap:not(.is-main) .circle-img:hover {
+              transform: scale(1.05);
+            }
           }
         `}
       </style>
@@ -386,63 +489,43 @@ export default function AboutUsInteractive() {
           </div>
 
           {/* RIGHT COLUMN */}
-          <div style={styles.rightCol}>
+          <div style={styles.rightCol} ref={stageRef}>
             <div style={styles.bgShapeDots} />
 
             {sparkles.map((sparkle) => (
-              <motion.div
+              <div
                 key={`sparkle-${sparkle.id}`}
+                className="sparkle-dot"
                 style={{
-                  position: "absolute",
                   width: `${sparkle.size}px`,
                   height: `${sparkle.size}px`,
                   backgroundColor: sparkle.color,
-                  borderRadius: "50%",
                   top: sparkle.top,
                   left: sparkle.left,
                   right: sparkle.right,
-                  zIndex: 2,
-                  pointerEvents: "none",
-                }}
-                animate={{
-                  y: [0, -15, 0],
-                  opacity: [0.2, 0.8, 0.2],
-                  scale: [0.8, 1.2, 0.8],
-                }}
-                transition={{
-                  duration: 3.5,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  delay: sparkle.delay,
-                  ease: "easeInOut",
+                  animationDelay: `${sparkle.delay}s`,
                 }}
               />
             ))}
 
             {images.map((img) => {
               const isMain = activeImgId === img.id;
-              const dynamicStyle = getStyleForImage(isMain);
 
               return (
-                <motion.img
+                <div
                   key={img.id}
-                  className="interactive-circle-img"
-                  src={img.src}
-                  alt={img.alt}
+                  className={`circle-wrap${isMain ? " is-main" : ""}${canAnimate ? " can-animate" : ""}`}
+                  style={getWrapStyle(isMain)}
                   onClick={() => !isMain && setActiveImgId(img.id)}
-                  style={{
-                    position: "absolute",
-                    borderRadius: "50%",
-                    objectFit: "cover",
-                    ...dynamicStyle,
-                  }}
-                  whileHover={
-                    !isMain
-                      ? { scale: 1.05, filter: "brightness(1) blur(0px)" }
-                      : {}
-                  }
-                  transition={{ duration: 0.3 }}
-                />
+                >
+                  <img
+                    className="circle-img"
+                    src={img.src}
+                    alt={img.alt}
+                    decoding="async"
+                    draggable={false}
+                  />
+                </div>
               );
             })}
           </div>

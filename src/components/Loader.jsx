@@ -26,7 +26,11 @@ export default function Loader() {
 
       setTimeout(() => {
         if (isMounted) {
-          sessionStorage.setItem("has_seen_loader", "true");
+          try {
+            sessionStorage.setItem("has_seen_loader", "true");
+          } catch (e) {
+            // Storage can be blocked (private mode) - safe to ignore
+          }
           setIsLoading(false);
         }
       }, remainingTime);
@@ -74,8 +78,10 @@ export default function Loader() {
       position: "fixed",
       top: 0,
       left: 0,
-      width: "100vw",
-      height: "100vh",
+      right: 0,
+      bottom: 0,
+      width: "100%",
+      height: "100%",
       backgroundColor: colors.background,
       // Subtle radial glow in the center to make the logo pop against the white
       backgroundImage:
@@ -86,6 +92,10 @@ export default function Loader() {
       alignItems: "center",
       zIndex: 9999999,
       fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+      // Keep the overlay on its own GPU layer so fading it is smooth
+      willChange: "opacity",
+      transform: "translateZ(0)",
+      overflow: "hidden",
     },
     logoContainer: {
       position: "relative",
@@ -94,32 +104,6 @@ export default function Loader() {
       alignItems: "center",
       width: "220px",
       height: "220px",
-    },
-    logo: {
-      width: "130px",
-      height: "auto",
-      objectFit: "contain",
-      zIndex: 2,
-      // Soft luxury shadow tailored for light backgrounds
-      filter: "drop-shadow(0 15px 30px rgba(10, 20, 37, 0.12))",
-    },
-    outerSpinRing: {
-      position: "absolute",
-      width: "190px",
-      height: "190px",
-      borderRadius: "50%",
-      border: "2px solid rgba(197, 160, 89, 0.15)", // Subtle gold track
-      borderTopColor: colors.gold, // Solid gold leading edge
-      borderRightColor: "#E8C881", // Bright gold gradient transition
-      zIndex: 1,
-    },
-    innerPulseRing: {
-      position: "absolute",
-      width: "155px",
-      height: "155px",
-      borderRadius: "50%",
-      border: `1px dashed rgba(10, 20, 37, 0.15)`, // Subtle navy contrast ring
-      zIndex: 1,
     },
     textContainer: {
       marginTop: "24px",
@@ -148,69 +132,186 @@ export default function Loader() {
   };
 
   return (
-    <AnimatePresence>
-      {isLoading && (
-        <motion.div
-          style={styles.overlay}
-          initial={{ opacity: 1 }}
-          exit={{
-            opacity: 0,
-            scale: 1.02,
-            filter: "blur(8px)",
-            transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
-          }}
-        >
-          <div style={styles.logoContainer}>
-            {/* Outer Gold Spinning Ring */}
-            <motion.div
-              style={styles.outerSpinRing}
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
+    <>
+      {/*
+        SMOOTHNESS NOTES
+        - All loops below animate ONLY transform/opacity in plain CSS. The browser
+          runs these on the GPU compositor thread, so they stay smooth even while
+          the main thread is busy loading/hydrating the page (JS-driven
+          animations stutter in exactly that situation on phones).
+        - No blur/drop-shadow filters are animated (very expensive on mobile GPUs).
+      */}
+      <style>
+        {`
+          @keyframes ldrSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes ldrSpinReverse {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(-360deg); }
+          }
+          @keyframes ldrPulse {
+            0%, 100% { transform: scale(0.98); }
+            50% { transform: scale(1.02); }
+          }
+          @keyframes ldrBreathe {
+            0%, 100% { transform: scale(0.95); }
+            50% { transform: scale(1.03); }
+          }
+          @keyframes ldrFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes ldrTextIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
 
-            {/* Inner Reverse Navy Dashed Ring */}
-            <motion.div
-              style={styles.innerPulseRing}
-              animate={{ rotate: -360, scale: [0.98, 1.02, 0.98] }}
-              transition={{
-                rotate: { duration: 25, repeat: Infinity, ease: "linear" },
-                scale: { duration: 3, repeat: Infinity, ease: "easeInOut" },
-              }}
-            />
+          .ldr-layer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            border-radius: 50%;
+            margin: 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            will-change: transform;
+            transform: translateZ(0);
+          }
 
-            {/* Premium Breathing Logo */}
-            <motion.img
-              src={logo}
-              alt="Shree Rajkot Lohana Boarding House"
-              style={styles.logo}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{
-                scale: [0.95, 1.03, 0.95],
-                opacity: 1,
-              }}
-              transition={{
-                scale: { duration: 2.5, repeat: Infinity, ease: "easeInOut" },
-                opacity: { duration: 0.5 },
-              }}
-            />
-          </div>
+          /* Outer gold spinning ring */
+          .ldr-outer-ring {
+            width: 190px;
+            height: 190px;
+            margin-top: -95px;
+            margin-left: -95px;
+            border: 2px solid rgba(197, 160, 89, 0.15);
+            border-top-color: ${colors.gold};
+            border-right-color: #E8C881;
+            box-sizing: border-box;
+            z-index: 1;
+            animation: ldrSpin 1.5s linear infinite;
+          }
 
-          {/* Elegant Text Underneath */}
+          /* Inner reverse dashed ring: wrapper rotates, child pulses */
+          .ldr-inner-wrap {
+            width: 155px;
+            height: 155px;
+            margin-top: -77.5px;
+            margin-left: -77.5px;
+            z-index: 1;
+            animation: ldrSpinReverse 25s linear infinite;
+          }
+          .ldr-inner-ring {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 1px dashed rgba(10, 20, 37, 0.15);
+            box-sizing: border-box;
+            will-change: transform;
+            animation: ldrPulse 3s ease-in-out infinite;
+          }
+
+          /* Static soft shadow under the logo (replaces animated drop-shadow) */
+          .ldr-logo-shadow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120px;
+            height: 120px;
+            margin-top: -50px;
+            margin-left: -60px;
+            border-radius: 50%;
+            background: radial-gradient(
+              circle at center,
+              rgba(10, 20, 37, 0.14) 0%,
+              rgba(10, 20, 37, 0.06) 45%,
+              transparent 72%
+            );
+            z-index: 1;
+            pointer-events: none;
+          }
+
+          /* Logo: wrapper fades in once, image breathes forever */
+          .ldr-logo-wrap {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            animation: ldrFadeIn 0.5s ease-out 0s forwards;
+          }
+          .ldr-logo {
+            width: 130px;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            will-change: transform;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            animation: ldrBreathe 2.5s ease-in-out infinite;
+          }
+
+          .ldr-text {
+            opacity: 0;
+            animation: ldrTextIn 0.5s ease-out 0.2s forwards;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .ldr-outer-ring { animation-duration: 3s; }
+            .ldr-inner-wrap, .ldr-inner-ring, .ldr-logo { animation: none; }
+          }
+        `}
+      </style>
+
+      <AnimatePresence>
+        {isLoading && (
           <motion.div
-            style={styles.textContainer}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
+            style={styles.overlay}
+            initial={{ opacity: 1 }}
+            // Opacity-only exit = smooth on every phone (blur/scale on a
+            // full-screen layer was the main cause of the lag)
+            exit={{
+              opacity: 0,
+              transition: { duration: 0.5, ease: "easeOut" },
+            }}
           >
-            <p style={styles.title}>Est. 1896</p>
-            <p style={styles.subtitle}>Crafting a Second Home for Students</p>
+            <div style={styles.logoContainer}>
+              {/* Outer Gold Spinning Ring */}
+              <div className="ldr-layer ldr-outer-ring" />
+
+              {/* Inner Reverse Navy Dashed Ring */}
+              <div className="ldr-layer ldr-inner-wrap">
+                <div className="ldr-inner-ring" />
+              </div>
+
+              {/* Static soft shadow */}
+              <div className="ldr-logo-shadow" />
+
+              {/* Premium Breathing Logo */}
+              <div className="ldr-logo-wrap">
+                <img
+                  src={logo}
+                  alt="Shree Rajkot Lohana Boarding House"
+                  className="ldr-logo"
+                  decoding="async"
+                  loading="eager"
+                  fetchpriority="high"
+                  draggable={false}
+                />
+              </div>
+            </div>
+
+            {/* Elegant Text Underneath */}
+            <div style={styles.textContainer} className="ldr-text">
+              <p style={styles.title}>Est. 1896</p>
+              <p style={styles.subtitle}>Crafting a Second Home for Students</p>
+            </div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

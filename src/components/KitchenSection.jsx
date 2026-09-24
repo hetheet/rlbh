@@ -315,10 +315,10 @@ export default function KitchenSection() {
           .aroma-2 { animation: aromaRise 2.8s infinite ease-out 0.9s; }
           .aroma-3 { animation: aromaRise 2.8s infinite ease-out 1.8s; }
 
-          /* ORBIT RING */
+          /* ORBIT RING (centering is done by the wrapper; animation only rotates) */
           @keyframes slowRotate {
-            from { transform: translate(-50%, -50%) rotate(0deg); }
-            to { transform: translate(-50%, -50%) rotate(360deg); }
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
           }
           .gold-dashed-ring {
             animation: slowRotate 45s linear infinite;
@@ -773,20 +773,32 @@ export default function KitchenSection() {
                   gap: isMobile ? "1.5rem" : "0",
                 }}
               >
-                {/* Spinning Gold Dashed Orbit Ring */}
+                {/* Spinning Gold Dashed Orbit Ring (centered by wrapper, only the ring rotates) */}
                 <div
-                  className="gold-dashed-ring"
                   style={{
                     position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    width: isMobile ? "270px" : "430px",
-                    height: isMobile ? "270px" : "430px",
-                    borderRadius: "50%",
-                    border: `1.5px dashed ${colors.gold}`,
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     pointerEvents: "none",
                   }}
-                />
+                >
+                  <div
+                    className="gold-dashed-ring"
+                    style={{
+                      width: isMobile ? "270px" : "430px",
+                      height: isMobile ? "270px" : "430px",
+                      flexShrink: 0,
+                      boxSizing: "border-box",
+                      borderRadius: "50%",
+                      border: `1.5px dashed ${colors.gold}`,
+                    }}
+                  />
+                </div>
 
                 <div
                   style={{
