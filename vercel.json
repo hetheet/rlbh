@@ -1,8 +1,13 @@
 {
   "rewrites": [
+    { "source": "/((?!sitemap\\.xml|robots\\.txt|logo\\.webp|favicon\\.svg|assets/).*)", "destination": "/index.html" }
+  ],
+  "redirects": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/:path(.*)",
+      "has": [{ "type": "host", "value": "www.rlbh.org" }],
+      "destination": "https://rlbh.org/:path",
+      "permanent": true
     }
   ]
 }
