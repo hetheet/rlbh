@@ -124,7 +124,7 @@ const facilityGroups = [
       },
       {
         title: "Affordable Fees",
-        desc: "Highly affordable structure for middle-class families.",
+desc: "A fee structure designed to be affordable for every family.",
         icon: Wallet,
         stat: "Affordable",
       },
