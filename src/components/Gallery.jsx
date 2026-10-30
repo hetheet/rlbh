@@ -343,12 +343,6 @@ export default function Gallery() {
       {/* --- FULLSCREEN LIGHTBOX --- */}
       {lightboxData && (
         <div className="lightbox" onClick={() => setLightboxData(null)}>
-          <button
-            className="lightbox-close"
-            onClick={() => setLightboxData(null)}
-          >
-            <X size={24} />
-          </button>
           <div
             className="lightbox-content"
             onClick={(e) => e.stopPropagation()}
