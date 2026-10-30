@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { X, Maximize2, Sparkles } from "lucide-react";
 
 // --- PHOTO IMPORTS ---
@@ -242,7 +243,7 @@ export default function Gallery() {
           .lightbox {
             position: fixed;
             inset: 0;
-            z-index: 9999;
+            z-index: 2147483647;
             background-color: ${colors.glassOverlay};
             backdrop-filter: blur(10px);
             display: flex;
@@ -275,14 +276,14 @@ export default function Gallery() {
           .lightbox-content {
             position: relative;
             max-width: 90vw;
-            max-height: 90vh;
+            max-height: calc(100vh - 80px);
             border-radius: 12px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             animation: scaleUp 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
           }
           .lightbox-img {
             max-width: 100%;
-            max-height: 90vh;
+            max-height: calc(100vh - 80px);
             object-fit: contain;
             border-radius: 12px;
             display: block;
@@ -340,21 +341,23 @@ export default function Gallery() {
         <div className="loading-trigger">Scroll to load more photos...</div>
       )}
 
-      {/* --- FULLSCREEN LIGHTBOX --- */}
-      {lightboxData && (
-        <div className="lightbox" onClick={() => setLightboxData(null)}>
-          <div
-            className="lightbox-content"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={lightboxData.src}
-              alt={lightboxData.alt}
-              className="lightbox-img"
-            />
-          </div>
-        </div>
-      )}
+      {/* --- FULLSCREEN LIGHTBOX (rendered on top of navbar via portal) --- */}
+      {lightboxData &&
+        createPortal(
+          <div className="lightbox" onClick={() => setLightboxData(null)}>
+            <div
+              className="lightbox-content"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={lightboxData.src}
+                alt={lightboxData.alt}
+                className="lightbox-img"
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
     </section>
   );
 }
