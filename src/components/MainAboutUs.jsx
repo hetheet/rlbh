@@ -335,7 +335,7 @@ export default function MainAboutUs() {
             </h1>
 
             <p style={styles.description}>
-              Shree Rajkot Lohana Boarding House is an award-winning Boarding
+              Shree Rajkot Lohana Boarding House is an Trusted Boarding
               built by visionary elders. We provide a disciplined, culturally
               rich, and highly supportive second home where young aspirants
               transform into tomorrow's leaders.
