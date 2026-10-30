@@ -396,10 +396,7 @@ export default function EligibilitySection() {
                     ineligible.
                   </span>
                   <span className="elg-only-desktop">
-                    Admissions are strictly reserved for male students belonging
-                    to the Lohana community who are actively enrolled in a
-                    school or college. Standalone coaching or exam aspirants are
-                    not eligible.
+                    Admission is strictly reserved for boys from the Lohana community who are actively enrolled in a recognized school or college. Students attending only coaching classes or preparing for competitive exams are not eligible.
                   </span>
                 </p>
               </div>
