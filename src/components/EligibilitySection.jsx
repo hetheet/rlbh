@@ -59,21 +59,6 @@ export default function EligibilitySection() {
         "Master of Laws (LLM) and other university master's courses",
       ],
     },
-    {
-      title: "Professional & Specialized Degrees",
-      subtitle:
-        "For college students pursuing professional accounting or degree tracks",
-      badge: "Professional",
-      iconPath:
-        "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
-      courses: [
-        "Chartered Accountancy (CA Foundation, Inter & Final students)",
-        "Company Secretary (CS) & Cost Accountancy (CMA students)",
-        "Integrated dual-degree college programs (e.g., B.Com + CA)",
-        "Bachelor of Education (B.Ed) and physical education degrees",
-        "Polytechnic diploma and technical institute college students",
-      ],
-    },
   ];
 
   return (
@@ -221,6 +206,10 @@ export default function EligibilitySection() {
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 28px;
             width: 100%;
+          }
+          /* Odd last card (3 cards total) spans full width so no empty gap */
+          .elg-card:last-child:nth-child(odd) {
+            grid-column: 1 / -1;
           }
           .elg-card {
             background-color: ${colors.pearl};
