@@ -29,7 +29,7 @@ export default function PremiumTrustStrip() {
     {
       id: 1,
       title: "A Second Home",
-      text: "A place where students feel comfortable, supported, and at home.",
+      text: "A place where students feel comfortable, secure, and supported.",
       icon: Home,
       delay: 0,
     },
