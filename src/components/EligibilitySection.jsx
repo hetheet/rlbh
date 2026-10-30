@@ -207,9 +207,11 @@ export default function EligibilitySection() {
             gap: 28px;
             width: 100%;
           }
-          /* Odd last card (3 cards total) spans full width so no empty gap */
+          /* Odd last card (3 cards total): same width as the other cards, centered in the last row */
           .elg-card:last-child:nth-child(odd) {
             grid-column: 1 / -1;
+            justify-self: center;
+            width: calc((100% - 28px) / 2);
           }
           .elg-card {
             background-color: ${colors.pearl};
@@ -329,6 +331,11 @@ export default function EligibilitySection() {
             .elg-only-desktop { display: none; }
 
             .elg-grid { grid-template-columns: minmax(0, 1fr); }
+            .elg-card:last-child:nth-child(odd) {
+              grid-column: auto;
+              justify-self: stretch;
+              width: 100%;
+            }
             .elg-card { padding: 28px 22px; }
             .elg-card-title { font-size: 1.4rem; }
             .elg-list-item { font-size: 0.95rem; }
